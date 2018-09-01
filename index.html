@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta content="RegexpMe是一个JavaScript正则表达式可视化工具，拥有中文版本、英文版本的正则表达式在线学习测试工具。" name="description">
+<meta content="正则表达式，Regular Expression，RegExp，RegexpMe" name="keywords">
+<title>RegexpMe: 正则表达式工具</title>
+<link rel="stylesheet" href="index.css">
+</head>
+<body>
+<script>
+var params=getParams();
+if (params.embed || params.cmd=="export") {
+  document.body.className+= " embed";
+}
+
+function trim(s) {
+  return s.replace(/^\s+/,'').replace(/\s+$/,'');
+}
+
+function getParams() {
+  var params=location.hash;
+  if (!params || params.length<2) {
+    params={embed:false,re:"",highlight:true,flags:''};
+  } else {
+    params=params.slice(2);
+    params=params.split("&").reduce(function (p,a) {
+      a=a.split("=");
+      p[a[0]]=a[1];
+      return p;
+    },{});
+    params.embed=params.embed==='true';
+    params.flags=params.flags || '';
+    params.re=params.re?trim(decodeURIComponent(params.re)):'';
+  }
+  return params;
+}
+</script>
+<h1>RegexpMe <em>一个JavaScript正则表达式可视化工具</em></h1>
+<div id="inputCt">
+    <div class="re code">
+      <table>
+        <tr>
+          <td style="width:1em">/</td>
+          <td style="width:auto">
+            <input id="input" class="input" value="^(a|b)*?$" />
+          </td>
+          <td style="width:1em">/</td>
+          <td style="width:3em" id="flagBox"></td>
+        </tr>
+      </table>
+    </div>
+    <button id="visualIt">生成</button>
+    <button id="exportIt">导出图像</button>
+    <button id="embedIt">嵌入在我的站点!</button>
+    <button id="resetIt" onclick="resetIt();">清空</button>
+    <label><input type="checkbox" name="flag" value="i" />忽略大小写</label>
+    <label><input type="checkbox" name="flag" value="m" />开启多行</label>
+    <label><input type="checkbox" name="flag" value="g" />全局匹配</label>
+</div>
+<p id="errorBox" class="code">Error Message</p>
+<div id="graphCt" class="code"></div>
+<div id="noteBox">
+  <div class="note">
+    <div class="lh30 plr20"><b class="fb col-white01">到底什么是正则表达式？</b></div>
+    <div class="lh30 plr20">
+      在编写处理字符串的程序或网页时，经常有查找符合某些复杂规则的字符串的需要。正则表达式就是用于描述这些规则的工具。换句话说，正则表达式就是记录文本规则的代码。
+    </div>
+    <div class="clearfix ptb10">
+      <div class="fl pl20 pr20">
+        <div class="lh30">
+          <b class="fb col-white01">常用元字符</b>
+        </div>
+        <table cellspacing="0">
+          <thead><tr><th scope="col">语法</th><th scope="col">说明</th></tr></thead>
+          <tbody>
+            <tr><td><span class="code">.</span></td><td><span class="desc">匹配除换行符以外的任意字符</span></td></tr>
+            <tr><td><span class="code">\w</span></td><td><span class="desc">匹配字母或数字或下划线</span></td></tr>
+            <tr><td><span class="code">\s</span></td><td><span class="desc">匹配任意的空白符</span></td></tr>
+            <tr><td><span class="code">\d</span></td><td><span class="desc">匹配数字</span></td></tr>
+            <tr><td><span class="code">\b</span></td><td><span class="desc">匹配单词的开始或结束</span></td></tr>
+            <tr><td><span class="code">^</span></td><td><span class="desc">匹配字符串的开始</span></td></tr>
+            <tr><td><span class="code">$</span></td><td><span class="desc">匹配字符串的结束</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="fl pl20 pr20">
+        <div class="lh30">
+          <b class="fb col-white01">常用限定符</b>
+        </div>
+        <table cellspacing="0">
+          <thead><tr><th scope="col">语法</th><th scope="col">说明</th></tr></thead>
+          <tbody>
+            <tr><td><span class="code">*</span></td><td><span class="desc">重复零次或更多次</span></td></tr>
+            <tr><td><span class="code">+</span></td><td><span class="desc">重复一次或更多次</span></td></tr>
+            <tr><td><span class="code">?</span></td><td><span class="desc">重复零次或一次</span></td></tr>
+            <tr><td><span class="code">{n}</span></td><td><span class="desc">重复n次</span></td></tr>
+            <tr><td><span class="code">{n,}</span></td><td><span class="desc">重复n次或更多次</span></td></tr>
+            <tr><td><span class="code">{n,m}</span></td><td><span class="desc">重复n到m次</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="fl pl20 pr20">
+        <div class="lh30">
+          <b class="fb col-white01">常用反义词</b>
+        </div>
+        <table cellspacing="0">
+          <thead><tr><th scope="col">语法</th><th scope="col">说明</th></tr></thead>
+          <tbody>
+            <tr><td><span class="code">\W</span></td><td><span class="desc">匹配任意不是字母，数字，下划线，汉字的字符</span></td></tr>
+            <tr><td><span class="code">\S</span></td><td><span class="desc">匹配任意不是空白符的字符</span></td></tr>
+            <tr><td><span class="code">\D</span></td><td><span class="desc">匹配任意非数字的字符</span></td></tr>
+            <tr><td><span class="code">\B</span></td><td><span class="desc">匹配不是单词开头或结束的位置</span></td></tr>
+            <tr><td><span class="code">[^c]</span></td><td><span class="desc">匹配除了c以外的任意字符</span></td></tr>
+            <tr><td><span class="code">[^aht]</span></td><td><span class="desc">匹配除了aht这几个字母以外的任意字符</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="fl pl20 pr20">
+        <div class="lh30">
+          <b class="fb col-white01">其它</b>
+        </div>
+        <table cellspacing="0">
+          <thead><tr><th scope="col">代码/语法</th><th scope="col">说明</th></tr></thead>
+          <tbody>
+            <tr><td><span class="code">[abc]</span></td><td><span class="desc">匹配有a、b、c的字符</span></td></tr>
+            <tr><td><span class="code">[a-z]</span></td><td><span class="desc">匹配范围内的任意一个字符，即所有小写字母的任意一个</span></td></tr>
+            <tr><td><span class="code">[a-zA-Z]</span></td><td><span class="desc">匹配范围内的任意一个字符，即所有字母的任意一个</span></td></tr>
+            <tr><td><span class="code">(...)</span></td><td><span class="desc">匹配一切封闭</span></td></tr>
+            <tr><td><span class="code">(a|b)</span></td><td><span class="desc">匹配a或b</span></td></tr>
+            <tr><td><span class="code">(abcd)</span></td><td><span class="desc">匹配abcd的字符串</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="fl pl20">
+        <div class="lh30">
+          <b class="fb col-white01">模式修正符</b>
+        </div>
+        <table cellspacing="0">
+          <thead><tr><th scope="col">代码</th><th scope="col">说明</th></tr></thead>
+          <tbody>
+            <tr><td><span class="code">i</span></td><td><span class="desc">模式进行匹配不区分大小写</span></td></tr>
+            <tr><td><span class="code">m</span></td><td><span class="desc">将模式视为多行，使用^和$表示任何一行都可以匹配开始或结束</span></td></tr>
+            <tr><td><span class="code">x</span></td><td><span class="desc">表示模式中的空白忽略不计</span></td></tr>
+            <tr><td><span class="code">A</span></td><td><span class="desc">以模式字符串开头，相当于元字符^</span></td></tr>
+            <tr><td><span class="code">Z</span></td><td><span class="desc">以模式字符串结尾，相当于元字符$</span></td></tr>
+            <tr><td><span class="code">U</span></td><td><span class="desc">模式修正符可以取消贪婪模式</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="lh30 plr20">*、+限定符都是贪婪的，因为它们会尽可能多的匹配文字，只有在它们的后面加上一个?就可以实现非贪婪或最小匹配。</div>
+  </div>
+</div>
+
+<!--script src="http://cdn.staticfile.org/require.js/2.1.15/require.min.js"></script-->
+<!--script src="http://libs.useso.com/js/require.js/2.1.11/require.min.js"></script-->
+
+<script type="text/javascript" charset="utf-8">
+/*
+//var raphael="http://cdn.staticfile.org/raphael/2.1.2/raphael-min.js";
+var raphael="http://libs.useso.com/js/raphael/2.1.2/raphael-min.js";
+*/
+function $(id) {return document.getElementById(id)}
+function $$(q) {return document.querySelector(q)}
+
+var raphael='src/libs/raphael';
+var visualize='src/visualize';
+var parse='src/parse';
+var Kit='src/Kit';
+
+
+if (params.debug) {
+  document.write('<script src="src/libs/require.js" charset="utf-8"><'+'/script>');
+  window.addEventListener('DOMContentLoaded',function () {
+    require([raphael,visualize,parse,Kit],init);
+  });
+} else {
+  document.write('<script src="dest/regulex.js" charset="utf-8"><'+'/script>');
+  window.addEventListener('DOMContentLoaded',function () {
+    raphael=require('regulex').Raphael;
+    parse = require('regulex').parse;
+    visualize = require('regulex').visualize;
+    Kit=require('regulex').Kit;
+    init(raphael,visualize,parse,Kit);
+  });
+
+}
+
+// 清空文本框
+function resetIt() {
+  // javascript:document.getElementById('input').value='';javascript:document.getElementById('input').focus()
+  // document.getElementById('input').value='';
+  // document.getElementById('input').focus();
+  $('input').value="";
+  $('input').focus();
+}
+
+function init(R,visualize,parse,K) {
+var paper = R('graphCt', 10, 10);
+var input=$('input');
+var inputCt=$('inputCt');
+var visualBtn=$('visualIt');
+var embedBtn=$('embedIt');
+var exportBtn=$('exportIt');
+var errorBox=$('errorBox');
+var flags=document.getElementsByName('flag');
+var flagBox=$('flagBox');
+var getInputValue=function () {
+    return trim(input.value);
+};
+var setInputValue=function (v) {
+  return input.value=trim(v);
+};
+if (params.flags) {
+  setFlags(params.flags);
+}
+if (params.re) {
+  setInputValue(params.re);
+}
+visualIt();
+if (params.cmd=='export') {
+  showExportImage();
+  return;
+} else {
+  initListeners();
+  dragGraph($('graphCt'));
+}
+
+
+
+
+
+
+function visualIt(skipError) {
+  var re=getInputValue();
+  changeHash();
+  hideError();
+  var ret;
+  try {ret=parse(re)}
+  catch (e) {
+    if (e instanceof parse.RegexSyntaxError) {
+      if (!skipError) {
+        showError(re,e);
+      }
+    } else throw e;
+    return false;
+  }
+  visualize(ret,getFlags(),paper);
+  return true;
+}
+
+function hideError() {
+  errorBox.style.display='none';
+}
+function showError(re,err) {
+  errorBox.style.display='block';
+  var msg=["Error:"+err.message,""];
+  if (typeof err.lastIndex==='number') {
+    msg.push(re);
+    msg.push(K.repeats('-',err.lastIndex)+"^");
+  }
+  setInnerText(errorBox,msg.join("\n"));
+}
+
+function serializeHash(params) {
+  var re=getInputValue();
+  var flags=getFlags();
+  return "#!" +
+    (params.debug?"debug=true&":"") +
+    (params.cmd?"cmd="+params.cmd+"&":"") +
+    (params.embed?"embed=true&":"") +
+    "flags="+flags+"&re="+encodeURIComponent(params.re=re);
+
+}
+
+function changeHash() {
+  location.hash=serializeHash(params);
+}
+
+function initListeners() {
+  var LF='\n'.charCodeAt(0),CR='\r'.charCodeAt(0);
+  input.addEventListener('keydown',onEnter);
+  input.addEventListener('keyup',onKeyup);
+  input.addEventListener('paste',function (evt) {
+    var content=trim(evt.clipboardData.getData('text'));
+    if (content[0]==='/' && /\/[img]*$/.test(content)) {
+      evt.preventDefault();
+      var endIndex=content.lastIndexOf('/');
+      setFlags(content.slice(endIndex+1));
+      content=content.slice(1,endIndex);
+      setInputValue(content);
+    }
+    setTimeout(visualIt,50);
+  });
+  visualBtn.addEventListener('click',function () {
+    visualIt();
+  });
+  embedBtn.addEventListener('click',function () {
+    if (!visualIt()) return false;
+    var src=location.href;
+    var i=src.indexOf('#');
+    src=i>0?src.slice(0,i):src;
+    changeHash();
+    var re=getInputValue();
+    var html='<iframe frameborder="0" width="'+Math.ceil(paper.width)+'" height="'+Math.ceil(paper.height)+'" src="'+src+'#!embed=true&flags='+getFlags()+'&re='+encodeURIComponent(re)+'"></iframe>'
+    window.prompt("复制html代码:",html);
+  });
+
+  exportBtn.addEventListener('click',function () {
+    var newParams = Object.assign({},params);
+    newParams.cmd='export';
+    var hash = serializeHash(newParams);
+    window.open(location.href.split('#!')[0]+hash,"_blank");
+  });
+
+
+  /*
+  window.addEventListener('hashchange',function () {
+    if (manualHash) return;
+    var p=getParams();
+    if (p.re && p.re!==params.re) {
+      params.re=p.re;
+      setInputValue(p.re);
+      visualIt();
+    }
+  });*/
+  for (var i=0,l=flags.length;i<l;i++) {
+    flags[i].addEventListener('change',onChangeFlags);
+  }
+
+  function onChangeFlags(e) {
+    setInnerText(flagBox,getFlags());
+    visualIt();
+    changeHash();
+  }
+
+
+  var onKeyupTid;
+  function onKeyup(e) {
+    if (e.keyCode===LF || e.keyCode===CR) {
+      return true;
+    }
+    clearTimeout(onKeyupTid);
+    onKeyupTid=setTimeout(function () {
+      var skipError=true;
+      visualIt(skipError);
+    },100);
+  }
+  function onEnter(e) {
+    if (e.keyCode===LF || e.keyCode===CR) {
+      e.preventDefault();
+      e.stopPropagation();
+      visualIt();
+    }
+  }
+}
+
+function getFlags() {
+  var fg='';
+  for (var i=0,l=flags.length;i<l;i++) {
+    if (flags[i].checked) fg+=flags[i].value;
+  }
+  return fg;
+}
+
+function setFlags(fg) {
+  for (var i=0,l=fg.length;i<l;i++) {
+    if (~fg.indexOf(flags[i].value)) flags[i].checked=true;
+    else flags[i].checked=false;
+  }
+  setInnerText(flagBox,fg);
+}
+
+function showExportImage() {
+  svg = graphCt.getElementsByTagName('svg')[0];
+  var w = svg.clientWidth || parseInt(getComputedStyle(svg).width);
+  var h = svg.clientHeight || parseInt(getComputedStyle(svg).height);
+  var img = new Image;
+  img.width=w;
+  img.height=h;
+  img.setAttribute('src',svgDataURL(svg));
+
+  var canvas = document.createElement( "canvas" );
+  var ctx = canvas.getContext( "2d" );
+
+  canvas.className="exportCanvas";
+  canvas.setAttribute('width',w);
+  canvas.setAttribute('height',h);
+  img.onload=function () {
+    ctx.drawImage( img, 0, 0 );
+    graphCt.style.display='none';
+    document.body.appendChild(canvas);
+  };
+}
+
+function svgDataURL(svg) {
+  var svgAsXML = (new XMLSerializer).serializeToString(svg);
+  return "data:image/svg+xml," + encodeURIComponent(svgAsXML);
+}
+
+
+function dragGraph(g) {
+  g.addEventListener('mousedown',startMove);
+
+  function startMove(e) {
+    clearSelect();
+    var x=e.clientX,y=e.clientY;
+    g.addEventListener('mousemove',onMove);
+
+    document.addEventListener('mouseup',unbind,true);
+    window.addEventListener('mouseup',unbind,true);
+    function unbind(e) {
+      g.removeEventListener('mousemove',onMove);
+      document.removeEventListener('mouseup',unbind,true);
+      window.removeEventListener('mouseup',unbind,true);
+    }
+
+    function onMove(e) {
+      var dx=x-e.clientX,dy=y-e.clientY;
+      if (dx>0 && g.scrollWidth-g.scrollLeft-g.clientWidth<2
+          || dx<0 && g.scrollLeft<1) {
+        document.documentElement.scrollLeft+=dx;
+        document.body.scrollLeft+=dx;
+      } else {
+        g.scrollLeft+=dx;
+      }
+      if (dy>0 && g.scrollHeight-g.scrollTop-g.clientHeight<2
+          || dy<0 && g.scrollTop<1) {
+        document.documentElement.scrollTop+=dy;
+        document.body.scrollTop+=dy;
+      } else {
+        g.scrollTop+=dy;
+      }
+      x=e.clientX;
+      y=e.clientY;
+    }
+  }
+}
+
+function getInnerText(ele) {
+  if (!ele) return '';
+  var node=ele.firstChild,results=[];
+  if (!node) return '';
+  do {
+    if (node.nodeType===document.TEXT_NODE) results.push(node.nodeValue);
+    else results.push(getInnerText(node));
+  } while (node=node.nextSibling);
+  return results.join('');
+}
+function setInnerText(ele,s) {
+  ele.innerHTML='';
+  var t=document.createTextNode('');
+  t.nodeValue=s;
+  ele.appendChild(t);
+  return s;
+}
+
+function clearSelect() {
+  if (window.getSelection) {
+    if (window.getSelection().empty) {  // Chrome
+      window.getSelection().empty();
+    } else if (window.getSelection().removeAllRanges) {  // Firefox
+      window.getSelection().removeAllRanges();
+    }
+  } else if (document.selection) {  // IE
+    document.selection.empty();
+  }
+}
+}
+</script>
+
+
+<footer>创建者 yhua</footer>
+<script>
+if (params.embed) {
+  document.write('<div class="footer"><a href="'+location.href+'&embed=false" target="_blank">by yhua</a></div>');
+}
+</script>
+<a id="github" href="/en/" style="display:inline-block;width:149px;height:149px;position: absolute; top: 0; right: 0; border: 0;"><img style="width:149px;height:149px;position: absolute; top: 0; right: 0; border: 0;" src="zh.png" title="点击切换英文版" alt="中文版" data-canonical-src="zh.png"></a>
+</body>
+</html>

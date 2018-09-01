@@ -1,0 +1,22 @@
+{
+  "name": "regexpme",
+  "version": "0.0.2",
+  "description": "A JavaScript Regular Expression Visualizer.",
+  "main": "index",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/regulex.git"
+  },
+  "keywords": [
+    "Regular Expression",
+    "RegExp",
+    "RegexpMe"
+  ],
+  "dependencies":{
+    "amdefine":"~1.0.0"
+  },
+  "author": {
+    "name": "yhua"
+  },
+  "license": "MIT"
+}
